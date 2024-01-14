@@ -22,14 +22,13 @@ const moveCursor = (dx, dy) => {
   })
 }
 
-
-
-
 // * socekt = net.Socket (Duplex Stream)
 const socket = net.createConnection({ host: '127.0.0.1', port: 3008 }, async () => {
   console.log("Connected to the server\n");
 })
 
+
+let id;
 
 const ask = async () => {
   const message = await rl.question('Enter a message > ');
@@ -37,7 +36,7 @@ const ask = async () => {
   await moveCursor(0, -1);
   // * Clear the current line that the cursor is in
   await clearLine(0);
-  socket.write(message);
+  socket.write(`${id}-message-${message}`);
 }
 
 socket.on('connect', () => {
@@ -46,13 +45,26 @@ socket.on('connect', () => {
 
 
 socket.on('data', async (data) => {
-  // * Log an empty line
-  console.log();
-  // * Move the cursor one line up
-  await moveCursor(0, -1);
-  // * Clear that line that cursor just moved into
-  await clearLine(0)
-  console.log(data.toString('utf-8'));
+
+   // * Log an empty line
+   console.log();
+   // * Move the cursor one line up
+   await moveCursor(0, -1);
+   // * Clear that line that cursor just moved into
+   await clearLine(0);
+
+   const dataStr = data.toString('utf-8');
+
+  if(dataStr.startsWith('id-')) {
+    // * New client connected
+    id = dataStr.substring(3);
+    console.log(`Your id is ${id}!\n`);
+  }
+  else {
+    // * New message received
+    console.log(dataStr);
+  }
+
   ask();
 })
 
